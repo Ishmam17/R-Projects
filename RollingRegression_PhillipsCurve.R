@@ -6,7 +6,7 @@ library(readxl)
 library(ggplot2)
 
 # Import dataset
-data <- read_excel(""C:/Users/ishma/Downloads/pc_data.xlsx")
+data <- read_excel("C:/Users/ishma/Downloads/pc_data.xlsx")
 
 # Dependent and independent variables
 log_prices <- log(data$prices) 
