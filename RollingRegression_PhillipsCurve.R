@@ -5,11 +5,11 @@ library(tidyverse)
 library(readxl)
 library(ggplot2)
 
-# Importing dataset
+# Import dataset
 data <- read_excel(""C:/Users/ishma/Downloads/pc_data.xlsx")
 
 # Dependent and independent variables
-log_prices <- data$prices 
+log_prices <- log(data$prices) 
 UNEMP <- data$UNEMP
 
 # Initialize results in DataFrame
