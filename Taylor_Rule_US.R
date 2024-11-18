@@ -1,4 +1,4 @@
-#------------------US Taylor Rule Model----------------------------------
+#------------------US Forward Looking Taylor Rule Model----------------------------------
 
 library(fredr)
 library(ggplot2)
