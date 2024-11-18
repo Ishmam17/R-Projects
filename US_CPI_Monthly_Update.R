@@ -1,4 +1,4 @@
-#------------------US CPI AND COMPONENTSMONTHLY UPDATE CODE----------------------------------
+#------------------US CPI AND COMPONENTS MONTHLY UPDATE CODE----------------------------------
 
 #Install packages
 #install.packages("fredr")
