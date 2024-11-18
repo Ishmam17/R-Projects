@@ -10,7 +10,7 @@ library(quantmod)
 library(readr)
 
 
-setwd("C:/Users/ishma/Downloads/RUpdates")
+setwd("")
 rm(list = ls())
 
 data <- read_csv("dataset.csv")
