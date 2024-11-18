@@ -36,7 +36,7 @@ cpi_data_wide <- cpi_data_combined %>%
   select(date, series_id, value) %>%
   pivot_wider(names_from = series_id, values_from = value)
 
-# monthly and yearly growth rates
+# MoM and YoY
 cpi_data_with_growth <- cpi_data_wide %>%
   arrange(date) %>%
   mutate(across(-date, list(
