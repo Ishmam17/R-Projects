@@ -1,10 +1,6 @@
 #------------------US CPI AND COMPONENTS MONTHLY UPDATE CODE----------------------------------
 
-#Install packages
-#install.packages("fredr")
-#install.packages("ggplot2")
-#install.packages("taskscheduleR")
-#install.packages("dplyr")
+#This code fetches monthly CPI series for different CPI components using FRED API, and stores them in a CSV file.
 
 #Import Packages
 library(fredr)
@@ -42,5 +38,5 @@ cpi_data_wide <- cpi_data_combined %>%
   select(date, series_id, value) %>%
   pivot_wider(names_from = series_id, values_from = value)
 
-# Save the final data to a CSV file
+# Save to a CSV file
 write.csv(cpi_data_wide, "C:/Users/ishma/Downloads/RUpdates/CPI_US.csv", row.names = FALSE)
