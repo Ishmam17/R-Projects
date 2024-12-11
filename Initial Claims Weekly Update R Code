@@ -1,0 +1,40 @@
+library(readxl)
+library(tidyverse)
+library(fredr)
+library(taskscheduleR)
+
+#FRED API key
+fredr_set_key("497386db517c7bc2487e16bc06de700a")
+
+# Pull weekly Initial Claims data
+claims_data <- fredr(
+  series_id = "ICSA", 
+  observation_start = as.Date("2016-01-01"),  # Start date (adjust as needed)
+  observation_end = Sys.Date(),               # End date (current date)
+  frequency = "w"                             # weekly frequency
+)
+
+#create 4 week average
+claims_data<- select(claims_data, date, value)
+claims_data<- mutate(claims_data, claims_4wk_avg=((value+lag(value,1)+lag(value,2)+lag(value,3))/4)) 
+                
+# Transpose the data frame
+transposed_data <- t(claims_data)
+
+# Write the transposed data to a CSV file
+write.csv(as.data.frame(transposed_data), "C:/Users/ishma/Downloads/claims_data.csv", row.names = TRUE)
+
+
+# Path to R script
+rscript <- file.path("C:/Users/ishma/Downloads/R_Code_Claims.R")
+
+taskscheduler_delete(taskname = "R_Code_Claims")
+
+# Scheduler
+taskscheduler_create(taskname = "R_Code_Claims", 
+                     rscript = rscript, 
+                     schedule = "WEEKLY", 
+                     starttime = "09:00", 
+                     startdate = "12/12/2024")
+
+
