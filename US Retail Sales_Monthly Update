@@ -1,0 +1,71 @@
+library(readxl)
+library(tidyverse)
+library(fredr)
+library(taskscheduleR)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(writexl)
+
+# FRED API key
+fredr_set_key("497386db517c7bc2487e16bc06de700a")
+
+series_ids <- c("RSAFS","RSGASS","RSMVPD")
+
+# Fetch data for all series
+retail_data <- lapply(series_ids, function(series_id) {
+  fredr(
+    series_id = series_id, 
+    observation_start = as.Date("2016-01-01"),
+    observation_end = Sys.Date(),
+    frequency = "m"
+  )
+})
+
+# Combine data into dataframe
+retail_dataframe <- bind_rows(retail_data)
+
+#Headline retail sales
+retail_sales <- retail_dataframe %>%
+  select(date, series_id, value) %>%
+  filter(series_id == "RSAFS")
+
+#Motor vehicle and parts dealers
+retail_mvpd <- retail_dataframe %>%
+  select(date, series_id, value) %>%
+  filter(series_id == "RSMVPD")
+
+#gas stations
+retail_gs <- retail_dataframe %>%
+  select(date, series_id, value) %>%
+  filter(series_id == "RSGASS")
+
+#Levels and Growths
+retail_sales<- mutate(retail_sales_monthly_change=value-lag(value,1),
+                      retail_sales, retail_sales_MoM=(value/lag(value,1)-1)*100, 
+                      retail_sales_yoy=(value/lag(value,12)-1)*100, 
+                      retail_sales_3m_ann=((value/lag(value,2))^(12/3)-1)*100,
+                      retail_sales_6m_ann=((value/lag(value,5))^(12/6)-1)*100)
+                      
+
+retail_mvpd<- mutate(retail_mvpd_monthly_change=value-lag(value,1),
+                      retail_mvpd, retail_sales_MoM=(value/lag(value,1)-1)*100, 
+                      retail_mvpd_yoy=(value/lag(value,12)-1)*100, 
+                      retail_mvpd_3m_ann=((value/lag(value,2))^(12/3)-1)*100,
+                      retail_mvpd_6m_ann=((value/lag(value,5))^(12/6)-1)*100)
+
+retail_gs<- mutate(retail_gs_monthly_change=value-lag(value,1),
+                     retail_gs, retail_sales_MoM=(value/lag(value,1)-1)*100, 
+                     retail_gs_yoy=(value/lag(value,12)-1)*100, 
+                     retail_gs_3m_ann=((value/lag(value,2))^(12/3)-1)*100,
+                     retail_gs_6m_ann=((value/lag(value,5))^(12/6)-1)*100)
+
+#Export to Excel
+write_xlsx(
+  list(
+    "Retail Sales" = retail_sales,
+    "Motor Vehicle Sales" = retail_mvpd,
+    "Gas Stations" = retail_gs
+  ),
+  path = "retail_data.xlsx"
+)
