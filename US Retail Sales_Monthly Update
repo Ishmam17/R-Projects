@@ -40,6 +40,14 @@ retail_gs <- retail_dataframe %>%
   select(date, series_id, value) %>%
   filter(series_id == "RSGASS")
 
+#core retail sales
+retail_core = as.data.frame(retail_sales$value - retail_mvpd$value)
+colnames(retail_core)[colnames(retail_core) == "retail_sales$value - retail_mvpd$value"] <- "value"
+
+#control retail sales
+retail_control = as.data.frame(retail_sales$value - retail_mvpd$value - retail_gs$value)
+colnames(retail_control)[colnames(retail_control) == "retail_sales$value - retail_mvpd$value - retail_gs$value"] <- "value"
+
 #Levels and Growths
 retail_sales<- mutate(retail_sales_monthly_change=value-lag(value,1),
                       retail_sales, retail_sales_MoM=(value/lag(value,1)-1)*100, 
@@ -47,7 +55,6 @@ retail_sales<- mutate(retail_sales_monthly_change=value-lag(value,1),
                       retail_sales_3m_ann=((value/lag(value,2))^(12/3)-1)*100,
                       retail_sales_6m_ann=((value/lag(value,5))^(12/6)-1)*100)
                       
-
 retail_mvpd<- mutate(retail_mvpd_monthly_change=value-lag(value,1),
                       retail_mvpd, retail_sales_MoM=(value/lag(value,1)-1)*100, 
                       retail_mvpd_yoy=(value/lag(value,12)-1)*100, 
@@ -60,12 +67,30 @@ retail_gs<- mutate(retail_gs_monthly_change=value-lag(value,1),
                      retail_gs_3m_ann=((value/lag(value,2))^(12/3)-1)*100,
                      retail_gs_6m_ann=((value/lag(value,5))^(12/6)-1)*100)
 
-#Export to Excel
+retail_core<- mutate(retail_core_monthly_change=value-lag(value,1),
+                     retail_core, retail_sales_MoM=(value/lag(value,1)-1)*100, 
+                     retail_core_yoy=(value/lag(value,12)-1)*100, 
+                     retail_cored_3m_ann=((value/lag(value,2))^(12/3)-1)*100,
+                     retail_core_6m_ann=((value/lag(value,5))^(12/6)-1)*100)
+
+retail_control<- mutate(retail_control_monthly_change=value-lag(value,1),
+                   retail_control, retail_sales_MoM=(value/lag(value,1)-1)*100, 
+                   retail_control_yoy=(value/lag(value,12)-1)*100, 
+                   retail_control_3m_ann=((value/lag(value,2))^(12/3)-1)*100,
+                   retail_control_6m_ann=((value/lag(value,5))^(12/6)-1)*100)
+
+# Save xlsx
 write_xlsx(
   list(
     "Retail Sales" = retail_sales,
     "Motor Vehicle Sales" = retail_mvpd,
-    "Gas Stations" = retail_gs
+    "Gas Stations" = retail_gs,
+    "Core" = retail_core,
+    "Control" = retail_control
   ),
   path = "retail_data.xlsx"
 )
+
+
+
+
