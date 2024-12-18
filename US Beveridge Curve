@@ -1,0 +1,52 @@
+library(readxl)
+library(tidyverse)
+library(fredr)
+library(taskscheduleR)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(writexl)
+
+# FRED API key
+fredr_set_key("497386db517c7bc2487e16bc06de700a")
+
+series_ids <- c("JTSJOL","UNEMPLOY")
+
+# Fetch data for all series
+data <- lapply(series_ids, function(series_id) {
+  fredr(
+    series_id = series_id, 
+    observation_start = as.Date("2016-01-01"),
+    observation_end = Sys.Date(),
+    frequency = "m"
+  )
+})
+
+# Combine data into dataframe
+dataframe <- bind_rows(data)
+
+#Unemployment
+unemployment <- dataframe %>%
+  select(date, series_id, value) %>%
+  filter(series_id == "UNEMPLOY")
+
+#Job Openings
+openings <- dataframe %>%
+  select(date, series_id, value) %>%
+  filter(series_id == "JTSJOL")
+
+# Beveridge
+beveridge_data <- unemployment %>%
+  inner_join(openings, by = "date", suffix = c("_unemp", "_job_openings")) %>%
+  mutate(beveridge = value_unemp / value_job_openings) %>%
+  select(date, beveridge)
+
+# Plots
+ggplot(beveridge_data, aes(x = date, y = beveridge)) +
+  geom_line(color = "blue", size = 1) +
+  labs(
+    title = "Beveridge Curve: Unemployment / Job Openings",
+    x = "Date",
+    y = "Beveridge Ratio (Unemployment / Job Openings)"
+  ) +
+  theme_minimal()
