@@ -1,0 +1,77 @@
+#---------------Grad student Optimization Problem-----------#
+
+library(nloptr)
+
+# Parameters
+monthly_income <- 4000         # Monthly typical graduate stipend
+wage <- monthly_income / (30 * 24)  # Wage rate per hour
+rent <- 2000                  # Rent cost
+groceries <- 1000             # Groceries cost
+public_good_price <- 200      # Price of the public good
+alpha <- 0.5                 # Consumption vs leisure preference
+study_hours <- 12             # Minimum study hours per day
+
+# Objective function: Negative utility (to maximize utility, minimize negative)
+utility_function <- function(x) {
+  C <- x[1]               # Consumption
+  L <- x[2]               # Leisure
+  G <- x[3]               # Public good consumption
+  
+  # Cobb-Douglas utility for private goods and leisure
+  private_utility <- (C^alpha) * (L^(1 - alpha))
+  
+  # Utility from the public good
+  public_good_utility <- G^0.5
+  
+  # Total utility
+  -(private_utility + public_good_utility)  # Negative for minimization
+}
+
+# Budget and time constraints
+budget_constraint <- function(x) {
+  C <- x[1]
+  L <- x[2]
+  G <- x[3]
+  
+  # Total income
+  total_income <- monthly_income - rent - groceries
+  
+  # Total expenditure
+  total_expenses <- C + public_good_price * G
+  
+  # Return budget balance (should be zero)
+  total_income - total_expenses
+}
+
+time_constraint <- function(x) {
+  L <- x[2]
+  
+  # Total time available in a day (24 hours minus study hours)
+  available_time <- 24 - study_hours
+  
+  # Leisure time must not exceed available time
+  available_time - L
+}
+
+# Set initial guesses for [C, L, G]
+initial_guess <- c(500, 5, 1)
+
+# Solve the optimization problem
+result <- nloptr(
+  x0 = initial_guess,                  # Initial guesses
+  eval_f = utility_function,           # Objective function
+  lb = c(0, 0, 0),                     # Lower bounds (no negative values)
+  ub = c(Inf, 24 - study_hours, Inf),  # Upper bounds (max leisure = available time)
+  eval_g_ineq = time_constraint,       # Time constraint
+  eval_g_eq = budget_constraint,       # Budget constraint
+  opts = list(
+    algorithm = "NLOPT_LN_COBYLA",     # Optimization algorithm
+    xtol_rel = 1.0e-8,                 # Tolerance level
+    maxeval = 1000                     # Maximum iterations
+  )
+)
+
+# Display the results
+cat("Optimal consumption:", result$solution[1], "\n")
+cat("Optimal leisure:", result$solution[2], "hours\n")
+cat("Optimal public good consumption:", result$solution[3], "\n")
