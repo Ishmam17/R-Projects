@@ -26,7 +26,7 @@ realgdp_hp <- hpfilter(rgdp, freq = 1600)
 l_realgdp_trend <- log(realgdp_hp$trend)  # Log of Trend GDP
 
 #Parameters and variables
-g1 = 0.8
+g1 = 0.7
 g2 = 3
 g3 = 1
 inf_target = 2.4
