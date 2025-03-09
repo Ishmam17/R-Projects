@@ -1,0 +1,61 @@
+library(dplyr)
+library(forecast)
+library(fredr)
+library(Metrics)
+
+# FRED API key
+fredr_set_key("497386db517c7bc2487e16bc06de700a")
+ 
+# Fetch CPI data
+cpi_data <- fredr(
+  series_id = "CPIAUCNS", 
+  observation_start = as.Date("1970-01-01"),
+  observation_end = Sys.Date(),
+  frequency = "m"
+) %>%
+  select(date, value) %>%
+  rename(CPI = value)
+
+#annualize CPI
+cpi_data <- cpi_data %>%
+  arrange(date) %>% 
+  mutate(cpi_ann = 1200 * (log(CPI) - log(lag(CPI))))
+
+# Convert to time series object
+cpi_ts <- ts(cpi_data$cpi_ann, start = c(1970, 1), frequency = 12)
+
+# In-sample and OOO
+cpi_ts_train <- window(cpi_ts, end = c(2019, 12))  
+cpi_ts_test  <- window(cpi_ts, start = c(2020, 1), end = c(2022, 10))  
+
+# Estimation and forecasts
+
+#AR4
+ar4 <- Arima(cpi_ts_train, order = c(4, 0, 0))
+ar4_f <- forecast(ar4, h = length(cpi_ts_test))
+
+#AR12
+ar12 <- Arima(cpi_ts_train, order = c(12, 0, 0))
+ar12_f <- forecast(ar12, h = length(cpi_ts_test))
+
+#AR(AIC)
+ar_aic <- auto.arima(cpi_ts_train, ic = "aic")
+ar_aic_f <- forecast(ar_aic, h = length(cpi_ts_test))
+
+#AR(BIC)
+ar_bic <- auto.arima(cpi_ts_train, ic = "bic")
+ar_bic_f <- forecast(ar_bic, h = length(cpi_ts_test))
+
+# Compute RMSE for each model
+rmse_results <- data.frame(
+  Model = c("AR(4)", "AR(12)", "AR(AIC)", "AR(BIC)"),
+  RMSE = c(
+    rmse(cpi_ts_test, ar4_f$mean),
+    rmse(cpi_ts_test, ar12_f$mean),
+    rmse(cpi_ts_test, ar_aic_f$mean),
+    rmse(cpi_ts_test, ar_bic_f$mean)
+  )
+)
+
+# Print RMSE
+print(rmse_results)
