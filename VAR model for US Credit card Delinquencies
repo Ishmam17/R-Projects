@@ -1,0 +1,65 @@
+library(dplyr)
+library(forecast)
+library(fredr)
+library(Metrics)
+library(readxl)
+library(vars)
+
+#Delinquency Series
+delinq <- read_excel("C:/Users/ishma/Downloads/DRCCLACBS (1).xlsx", sheet = "Quarterly, End of Period")
+delinq_ts <- ts(delinq$DRCCLACBS, start = c(1999,1), frequency = 4) #convert to ts
+
+#unemployment series
+unrate <- read_excel("C:/Users/ishma/Downloads/UNRATENSA (1).xlsx", sheet = "Quarterly")
+unrate_ts <- ts(unrate$UNRATENSA, start = c(1999,1), frequency = 4)  #convert to ts
+
+#tbill series (proxy for current financial conditions)
+tbill <- read_excel("C:/Users/ishma/Downloads/TB3MS (2).xlsx",sheet = "Quarterly")
+tbill_ts <- ts(tbill$TB3MS, start = c(1999,1), frequency = 4) #convert to ts
+
+# In-sample split
+delinq_ts_train <- window(delinq_ts, end = c(2023, 4))
+unrate_ts_train <- window(unrate_ts, end = c(2023, 4))
+tbill_ts_train <- window(tbill_ts, end = c(2023, 4))
+
+# OOS split
+delinq_ts_test <- window(delinq_ts, start = c(2024,1), end = c(2024, 4))
+unrate_ts_test <- window(unrate_ts, start = c(2024,1), end = c(2024, 4))
+tbill_ts_test <- window(tbill_ts, start = c(2024,1), end = c(2024, 4))
+
+#VARs
+train_data <- data.frame(
+  DELINQ = as.numeric(delinq_ts_train),
+  Unemployment = as.numeric(unrate_ts_train),
+  TBill = as.numeric(tbill_ts_train)
+)
+
+train_ts <- ts(train_data, start = c(1999,1), frequency = 4)
+
+# VAR(p)
+var_model <- VAR(train_ts, p = 4, type = "const")
+summary(var_model)
+
+# Forecasts
+var_forecast <- predict(var_model, n.ahead = length(delinq_ts_test))
+
+delinq_forecast <- var_forecast$fcst$DELINQ[, 1]  
+unrate_forecast <- var_forecast$fcst$Unemployment[, 1]  
+tbill_forecast <- var_forecast$fcst$TBill[, 1] 
+
+# RMSE
+rmse_results <- data.frame(
+  Variable = c("Delinq", "Unemployment", "T-Bill"),
+  RMSE = c(
+    rmse(delinq_ts_test, delinq_forecast),
+    rmse(unrate_ts_test, unrate_forecast),
+    rmse(tbill_ts_test, tbill_forecast)
+  )
+)
+
+print(rmse_results)
+
+Variable      RMSE
+1       Delinq 0.4731911
+2 Unemployment 0.4559205
+3       T-Bill 0.7548431
