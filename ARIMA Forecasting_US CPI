@@ -24,7 +24,7 @@ cpi_data <- cpi_data %>%
 # Convert to time series object
 cpi_ts <- ts(cpi_data$cpi_ann, start = c(1970, 1), frequency = 12)
 
-# In-sample and OOO
+# In-sample and OOS
 cpi_ts_train <- window(cpi_ts, end = c(2024, 01))  
 cpi_ts_test  <- window(cpi_ts, start = c(2024,02), end = c(2025, 2))  
 
