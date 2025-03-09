@@ -66,3 +66,9 @@ rmse_results <- data.frame(
 
 # Print RMSE
 print(rmse_results)
+
+Model     RMSE
+1   AR(4) 3.060491
+2  AR(12) 2.271112
+3 AR(AIC) 1.071074
+4 AR(BIC) 1.071074
