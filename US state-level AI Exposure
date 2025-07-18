@@ -1,3 +1,14 @@
+Artificial Intelligence Exposure Across State Labor Markets: An Analysis Using U.S. Census Business Data
+
+This study analyzes AI exposure across labor markets in the 10 most and least populous U.S. states using 2022 Census County Business Patterns data, categorizing industries into high-AI impact 
+(e.g., finance, IT, professional services) and low-AI impact (e.g., construction, barbers, plumbing). Results show that states like New York and California have high concentrations of jobs susceptible 
+to AI disruption, while states such as Wyoming and South Dakota have more employment in AI-resistant sectors. States with mixed economies, like Ohio and Georgia, show a balanced exposure. 
+The findings suggest that states with high AI exposure must prioritize workforce re-skilling and policy adaptation, while low-exposure states may face challenges integrating digital technologies long-term.
+
+
+
+---------R Script------------
+
 library(censusapi)
 library(dplyr)
 
