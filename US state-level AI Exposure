@@ -1,0 +1,92 @@
+library(censusapi)
+library(dplyr)
+
+#census_api_key
+census_api_key("", install = TRUE)
+
+# Pull state-level employment by NAICS for 2022
+cbp_2023 <- getCensus(
+  name = "cbp",
+  vintage = 2022,
+  vars = c("GEO_ID", "STATE", "NAICS2017", "EMP", "ESTAB", "PAYANN"),
+  region = "state:*"
+)
+
+# FIPS for top 10 largest + bottom 10 smallest states by population
+state_fips <- c(
+  "06", "48", "12", "36", "42", "17", "39", "13", "37", "26",  # largest
+  "56", "50", "02", "38", "46", "10", "44", "30", "23", "33"   # smallest
+)
+
+# NAICS codes of interest
+naics_codes <- c("52", "54", "51", "8121", "23822", "23")
+
+dataset <- cbp_2023 %>%
+  filter(STATE %in% state_fips, NAICS2017 %in% naics_codes) %>%
+  mutate(
+    employees = as.numeric(EMP)
+  ) %>%
+  select(state_fips = STATE, naics = NAICS2017, employees)
+
+# Rename states and NAICS codes
+dataset_final <- dataset %>%
+  filter(state_fips %in% state_fips, naics %in% naics_codes) %>%
+  mutate(
+    state = recode(state_fips,
+                   "06" = "California", "48" = "Texas", "12" = "Florida", "36" = "New York",
+                   "42" = "Pennsylvania", "17" = "Illinois", "39" = "Ohio", "13" = "Georgia",
+                   "37" = "North Carolina", "26" = "Michigan", "56" = "Wyoming", "50" = "Vermont",
+                   "02" = "Alaska", "38" = "North Dakota", "46" = "South Dakota", "10" = "Delaware",
+                   "44" = "Rhode Island", "30" = "Montana", "23" = "Maine", "33" = "New Hampshire"
+    ),
+    industry = recode(naics,
+                      "52" = "Finance & Insurance",
+                      "54" = "Professional Services",
+                      "51" = "Information Technology",
+                      "8121" = "Barbers / Personal Care",
+                      "23822" = "Plumbing / HVAC Contractors",
+                      "23" = "Construction"
+    ),
+    employees = as.numeric(employees)
+  ) %>%
+  select(state, industry, employees)
+
+#AI Impact
+dataset_final <- dataset_final %>%
+  mutate(
+    AI_impact = case_when(
+      industry %in% c("Construction", "Barbers / Personal Care", "Plumbing / HVAC Contractors") ~ "Low",
+      TRUE ~ "High"
+    )
+  )
+
+#chart
+library(dplyr)
+library(ggplot2)
+
+# Step 1: Summarize total employees by state and AI impact group
+ai_summary <- dataset_final %>%
+  group_by(state, AI_impact) %>%
+  summarise(total_employees = sum(employees, na.rm = TRUE), .groups = "drop")
+
+# Step 2: Compute total workforce per state
+state_totals <- ai_summary %>%
+  group_by(state) %>%
+  summarise(state_total = sum(total_employees), .groups = "drop")
+
+# Step 3: Merge and calculate percentages
+ai_percent <- ai_summary %>%
+  left_join(state_totals, by = "state") %>%
+  mutate(percent = 100 * total_employees / state_total)
+
+# Step 4: Plot
+ggplot(ai_percent, aes(x = reorder(state, -percent), y = percent, fill = AI_impact)) +
+  geom_bar(stat = "identity", position = "stack") +
+  coord_flip() +
+  labs(
+    title = "Share of Employees in Low vs High AI Impact Jobs by State",
+    x = "State",
+    y = "Percent of Workforce",
+    fill = "AI Impact"
+  ) +
+  theme_minimal()
