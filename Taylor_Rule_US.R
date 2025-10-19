@@ -10,7 +10,6 @@ library(quantmod)
 library(readr)
 
 
-setwd("")
 rm(list = ls())
 
 #import data
@@ -21,27 +20,33 @@ exp_inf <- data$EXPINF1YR
 rgdp <- data$GDPC1
 
 # Data transformations
-l_r_gdp <- log(rgdp)  # Log of GDP
-realgdp_hp <- hpfilter(rgdp, freq = 1600)
-l_realgdp_trend <- log(realgdp_hp$trend)  # Log of Trend GDP
+l_r_gdp <- log(rgdp)  
+realgdp_hp <- hpfilter(l_r_gdp, freq = 1600)   # apply HP filter to log GDP
+l_realgdp_trend <- realgdp_hp$trend            # Trend log GDP
 
-#Parameters and variables
-g1 = 0.7
-g2 = 3
-g3 = 1
-inf_target = 2.4
-nom_rate = real_nominal_rate_trend+exp_inf
-inf_gap = exp_inf - inf_target           
-out_gap = l_r_gdp - l_realgdp_trend
-real_policy_rate = ffr - exp_inf
+# Parameters
+g1 <- 0.7
+g2 <- 3
+g3 <- 1
+inf_target <- 2.4
+
+# Construct gaps and real rate
+inf_gap <- exp_inf - inf_target           
+out_gap <- l_r_gdp - l_realgdp_trend
+real_policy_rate <- ffr - exp_inf
+
+# HP filter for real policy rate
 real_nominal_rate_hp <- hpfilter(real_policy_rate, freq = 1600) 
-real_nominal_rate_trend <- real_nominal_rate_hp$trend  # Log of Trend GDP
-ffr_lagged <- stats::lag(ffr, k = -1) 
+real_nominal_rate_trend <- real_nominal_rate_hp$trend  
 
-#Forward-looking Taylor Rule
-tr_rate <- (g1 * ffr_lagged) + (1 - g1) * ((real_nominal_rate_trend + exp_inf + g2 * (inf_gap) + g3 * (out_gap)))
+# Lagged FFR
+ffr_lagged <- stats::lag(ffr, k = 1)   # 1-period lag
+
+# Forward-looking Taylor Rule
+tr_rate <- (g1 * ffr_lagged) + 
+  (1 - g1) * (real_nominal_rate_trend + exp_inf + g2 * inf_gap + g3 * out_gap)
+
 tail(tr_rate)
-
 
 
 
